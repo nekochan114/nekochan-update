@@ -60,6 +60,8 @@ function initializeAudioPlayer() {
     const currentTimeEl = document.getElementById('current-time');
     const totalTimeEl = document.getElementById('total-time');
     const volumeLevel = document.getElementById('volume-level');
+    const volumeIcon = document.querySelector('.audio-player-volume-icon');
+    const volumeSlider = document.querySelector('.audio-player-volume-slider');
     const audioElement = document.getElementById('audio-element');
     const toggleBtn = document.getElementById('player-toggle-btn');
     const minimizeBtn = document.getElementById('player-minimize-btn');
@@ -71,6 +73,10 @@ function initializeAudioPlayer() {
     let isShuffle = false;
     let isRepeat = false;
     let isMinimized = false;
+    let isMuted = false;
+    let currentVolume = 0.7; // Volumen predeterminado (70%)
+    let currentTrackIndex = 0;
+    let playlist = [];
     
     // Biblioteca de música
     const musicLibrary = document.getElementById('music-library');
@@ -78,90 +84,132 @@ function initializeAudioPlayer() {
     const musicTracks = document.querySelectorAll('.music-track');
     const libraryCloseBtn = document.getElementById('library-close-btn');
     
-    // Simular la reproducción de audio (sin audio real)
-    let progressInterval;
-    let currentProgress = 0;
-    const totalDuration = 183; // 3:03 en segundos
+    // Configurar el audio
+    audioElement.volume = currentVolume;
+    
+    // Actualizar la visualización del volumen
+    function updateVolumeDisplay() {
+        volumeLevel.style.width = `${currentVolume * 100}%`;
+        
+        // Actualizar el icono de volumen según el estado
+        if (isMuted || currentVolume === 0) {
+            volumeIcon.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                </svg>
+            `;
+            volumeIcon.classList.add('muted');
+        } else if (currentVolume < 0.5) {
+            volumeIcon.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+                    <path d="M7 9v6h4l5 5V4l-5 5H7z"/>
+                </svg>
+            `;
+            volumeIcon.classList.remove('muted');
+        } else {
+            volumeIcon.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            `;
+            volumeIcon.classList.remove('muted');
+        }
+    }
     
     // Actualizar la visualización del tiempo
     function updateTimeDisplay() {
-        const currentSeconds = Math.floor(currentProgress);
-        const minutes = Math.floor(currentSeconds / 60);
-        const seconds = currentSeconds % 60;
-        
-        currentTimeEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        progressBar.style.width = `${(currentProgress / totalDuration) * 100}%`;
+        if (audioElement.duration) {
+            const currentSeconds = Math.floor(audioElement.currentTime);
+            const totalSeconds = Math.floor(audioElement.duration);
+            const minutes = Math.floor(currentSeconds / 60);
+            const seconds = currentSeconds % 60;
+            const totalMinutes = Math.floor(totalSeconds / 60);
+            const totalSecondsRemainder = totalSeconds % 60;
+            
+            currentTimeEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            totalTimeEl.textContent = `${totalMinutes.toString().padStart(2, '0')}:${totalSecondsRemainder.toString().padStart(2, '0')}`;
+            
+            // Actualizar la barra de progreso
+            const progressPercentage = (audioElement.currentTime / audioElement.duration) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
     }
-    
-    // Formatear el tiempo total
-    const totalMinutes = Math.floor(totalDuration / 60);
-    const totalSeconds = totalDuration % 60;
-    totalTimeEl.textContent = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
     
     // Función para reproducir/pausar
     function togglePlayPause() {
-        isPlaying = !isPlaying;
-        
-        if (isPlaying) {
-            // Cambiar icono a pausa
-            playPauseBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                </svg>
-            `;
+        if (audioElement.src) {
+            if (isPlaying) {
+                audioElement.pause();
+                isPlaying = false;
+                audioPlayer.classList.remove('playing');
+                playPauseBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                `;
+            } else {
+                audioElement.play();
+                isPlaying = true;
+                audioPlayer.classList.add('playing');
+                playPauseBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                `;
+            }
+        } else if (playlist.length > 0) {
+            // Si no hay canción cargada pero hay playlist, cargar la primera canción
+            loadTrack(0);
+            togglePlayPause();
+        }
+    }
+    
+    // Función para cargar una pista
+    function loadTrack(index) {
+        if (playlist.length > 0 && index >= 0 && index < playlist.length) {
+            currentTrackIndex = index;
+            const track = playlist[index];
             
-            // Iniciar la simulación de progreso
-            progressInterval = setInterval(() => {
-                if (currentProgress < totalDuration) {
-                    currentProgress += 0.1;
-                    updateTimeDisplay();
-                } else {
-                    if (isRepeat) {
-                        currentProgress = 0;
-                        updateTimeDisplay();
-                    } else {
-                        clearInterval(progressInterval);
-                        isPlaying = false;
-                        playPauseBtn.innerHTML = `
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                        `;
-                    }
-                }
-            }, 100);
-        } else {
-            // Cambiar icono a reproducir
-            playPauseBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                </svg>
-            `;
+            // Actualizar la información del reproductor
+            document.querySelector('.audio-player-title').textContent = track.title;
+            document.querySelector('.audio-player-artist').textContent = track.artist;
             
-            // Detener la simulación de progreso
-            clearInterval(progressInterval);
+            // Cargar el audio
+            audioElement.src = track.audioSrc || 'https://assets.codepen.io/4358584/Anitek_-_Komorebi.mp3';
+            audioElement.load();
+            
+            // Si estaba reproduciendo, continuar reproduciendo
+            if (isPlaying) {
+                audioElement.play();
+            }
         }
     }
     
     // Función para canción anterior
     function previousTrack() {
-        currentProgress = 0;
-        updateTimeDisplay();
+        let newIndex;
+        if (isShuffle) {
+            newIndex = Math.floor(Math.random() * playlist.length);
+        } else {
+            newIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+        }
+        loadTrack(newIndex);
         if (isPlaying) {
-            clearInterval(progressInterval);
-            togglePlayPause();
-            togglePlayPause();
+            audioElement.play();
         }
     }
     
     // Función para siguiente canción
     function nextTrack() {
-        currentProgress = 0;
-        updateTimeDisplay();
+        let newIndex;
+        if (isShuffle) {
+            newIndex = Math.floor(Math.random() * playlist.length);
+        } else {
+            newIndex = (currentTrackIndex + 1) % playlist.length;
+        }
+        loadTrack(newIndex);
         if (isPlaying) {
-            clearInterval(progressInterval);
-            togglePlayPause();
-            togglePlayPause();
+            audioElement.play();
         }
     }
     
@@ -232,31 +280,71 @@ function initializeAudioPlayer() {
     
     // Función para seleccionar una pista de música
     function selectMusicTrack(track) {
-        // Actualizar la información del reproductor
+        // Obtener información de la pista
         const title = track.querySelector('.music-track-title').textContent;
         const artist = track.querySelector('.music-track-artist').textContent;
-        const coverSrc = track.querySelector('.music-track-cover img').src;
+        const trackCategory = track.getAttribute('data-category');
+        const trackIndex = Array.from(musicTracks).indexOf(track);
         
-        document.querySelector('.audio-player-title').textContent = title;
-        document.querySelector('.audio-player-artist').textContent = artist;
-        document.querySelector('.audio-player-album img').src = coverSrc;
+        // Crear una nueva playlist basada en la categoría seleccionada
+        playlist = [];
+        musicTracks.forEach(t => {
+            const tCategory = t.getAttribute('data-category');
+            if (trackCategory === 'all' || tCategory === trackCategory) {
+                playlist.push({
+                    title: t.querySelector('.music-track-title').textContent,
+                    artist: t.querySelector('.music-track-artist').textContent,
+                    category: tCategory,
+                    audioSrc: 'https://assets.codepen.io/4358584/Anitek_-_Komorebi.mp3' // URL de audio de ejemplo
+                });
+            }
+        });
         
-        // Reiniciar la reproducción
-        currentProgress = 0;
-        updateTimeDisplay();
+        // Encontrar el índice de la pista seleccionada en la nueva playlist
+        const playlistIndex = playlist.findIndex(p => p.title === title && p.artist === artist);
         
-        // Si estaba reproduciendo, reiniciar la reproducción
-        if (isPlaying) {
-            clearInterval(progressInterval);
-            togglePlayPause();
-            togglePlayPause();
-        } else {
-            // Iniciar la reproducción
-            togglePlayPause();
-        }
+        // Cargar y reproducir la pista
+        loadTrack(playlistIndex >= 0 ? playlistIndex : 0);
+        
+        // Iniciar la reproducción
+        isPlaying = false; // Resetear para que togglePlayPause funcione correctamente
+        togglePlayPause();
         
         // Cerrar la biblioteca
         musicLibrary.classList.remove('active');
+    }
+    
+    // Función para silenciar/activar el audio
+    function toggleMute() {
+        isMuted = !isMuted;
+        audioElement.muted = isMuted;
+        updateVolumeDisplay();
+    }
+    
+    // Función para ajustar el volumen
+    function setVolume(e) {
+        const rect = volumeSlider.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const newVolume = Math.max(0, Math.min(1, offsetX / rect.width));
+        
+        currentVolume = newVolume;
+        audioElement.volume = newVolume;
+        isMuted = (newVolume === 0);
+        audioElement.muted = isMuted;
+        
+        updateVolumeDisplay();
+    }
+    
+    // Función para buscar en la pista de audio
+    function seekAudio(e) {
+        if (audioElement.duration) {
+            const rect = progressBar.parentElement.getBoundingClientRect();
+            const offsetX = e.clientX - rect.left;
+            const newTime = (offsetX / rect.width) * audioElement.duration;
+            
+            audioElement.currentTime = newTime;
+            updateTimeDisplay();
+        }
     }
     
     // Asignar eventos a los botones
@@ -270,6 +358,34 @@ function initializeAudioPlayer() {
     if (libraryBtn) libraryBtn.addEventListener('click', toggleMusicLibrary);
     if (floatButton) floatButton.addEventListener('click', togglePlayerVisibility);
     if (libraryCloseBtn) libraryCloseBtn.addEventListener('click', toggleMusicLibrary);
+    if (volumeIcon) volumeIcon.addEventListener('click', toggleMute);
+    
+    // Asignar eventos a los controles de volumen y progreso
+    if (volumeSlider) {
+        volumeSlider.addEventListener('click', setVolume);
+        volumeSlider.addEventListener('mousedown', function(e) {
+            setVolume(e);
+            document.addEventListener('mousemove', setVolume);
+            document.addEventListener('mouseup', function() {
+                document.removeEventListener('mousemove', setVolume);
+            }, { once: true });
+        });
+    }
+    
+    if (progressBar && progressBar.parentElement) {
+        progressBar.parentElement.addEventListener('click', seekAudio);
+    }
+    
+    // Asignar eventos al elemento de audio
+    audioElement.addEventListener('timeupdate', updateTimeDisplay);
+    audioElement.addEventListener('ended', function() {
+        if (isRepeat) {
+            audioElement.currentTime = 0;
+            audioElement.play();
+        } else {
+            nextTrack();
+        }
+    });
     
     // Asignar eventos a las categorías de música
     musicCategories.forEach(category => {
@@ -285,6 +401,9 @@ function initializeAudioPlayer() {
     if (musicCategories.length > 0) {
         selectMusicCategory(musicCategories[0]);
     }
+    
+    // Inicializar la visualización del volumen
+    updateVolumeDisplay();
 }
 
 // Crear el botón flotante para mostrar el reproductor cuando está oculto
@@ -309,18 +428,18 @@ function createMusicLibrary() {
     // Datos de la biblioteca de música
     const musicData = {
         breakcore: [
-            { title: "Newlove", artist: "Sewerslvt", cover: "images/music/sewerslvt.jpg", duration: "4:21" },
-            { title: "Cyberia lyr3", artist: "Sewerslvt", cover: "images/music/sewerslvt.jpg", duration: "5:12" },
-            { title: "Ecifircas", artist: "Sewerslvt", cover: "images/music/sewerslvt.jpg", duration: "3:45" },
-            { title: "Looming.Sorrow.Descent", artist: "Sewerslvt", cover: "images/music/sewerslvt.jpg", duration: "6:02" },
-            { title: "Broken Memory", artist: "Sabuze", cover: "images/music/sabuze.jpg", duration: "3:18" },
-            { title: "Neon Dystopia", artist: "Sabuze", cover: "images/music/sabuze.jpg", duration: "4:33" },
-            { title: "I'll See You in 40", artist: "Death Dynamic Shroud", cover: "images/music/dds.jpg", duration: "5:27" },
-            { title: "Faith in Persona", artist: "Death Dynamic Shroud", cover: "images/music/dds.jpg", duration: "4:15" },
-            { title: "Ghosted", artist: "2hollis", cover: "images/music/2hollis.jpg", duration: "3:56" },
-            { title: "Midnight Run", artist: "2hollis", cover: "images/music/2hollis.jpg", duration: "4:08" },
-            { title: "Phantom Ensemble", artist: "Remilia Bandxz", cover: "images/music/remilia.jpg", duration: "3:42" },
-            { title: "Digital Tears", artist: "Remilia Bandxz", cover: "images/music/remilia.jpg", duration: "5:01" }
+            { title: "Newlove", artist: "Sewerslvt", cover: "images/music/sewerslvt.jpg", duration: "4:21", initial: "S" },
+            { title: "Cyberia lyr3", artist: "Sewerslvt", cover: "images/music/sewerslvt.jpg", duration: "5:12", initial: "S" },
+            { title: "Ecifircas", artist: "Sewerslvt", cover: "images/music/sewerslvt.jpg", duration: "3:45", initial: "S" },
+            { title: "Looming.Sorrow.Descent", artist: "Sewerslvt", cover: "images/music/sewerslvt.jpg", duration: "6:02", initial: "S" },
+            { title: "Broken Memory", artist: "Sabuze", cover: "images/music/sabuze.jpg", duration: "3:18", initial: "SB" },
+            { title: "Neon Dystopia", artist: "Sabuze", cover: "images/music/sabuze.jpg", duration: "4:33", initial: "SB" },
+            { title: "I'll See You in 40", artist: "Death Dynamic Shroud", cover: "images/music/dds.jpg", duration: "5:27", initial: "DDS" },
+            { title: "Faith in Persona", artist: "Death Dynamic Shroud", cover: "images/music/dds.jpg", duration: "4:15", initial: "DDS" },
+            { title: "Ghosted", artist: "2hollis", cover: "images/music/2hollis.jpg", duration: "3:56", initial: "2H" },
+            { title: "Midnight Run", artist: "2hollis", cover: "images/music/2hollis.jpg", duration: "4:08", initial: "2H" },
+            { title: "Phantom Ensemble", artist: "Remilia Bandxz", cover: "images/music/remilia.jpg", duration: "3:42", initial: "RB" },
+            { title: "Digital Tears", artist: "Remilia Bandxz", cover: "images/music/remilia.jpg", duration: "5:01", initial: "RB" }
         ],
         kanye: [
             { title: "Vultures 1", artist: "Ye & Ty Dolla $ign", cover: "images/music/vultures.jpg", duration: "3:14" },
@@ -361,7 +480,7 @@ function createMusicLibrary() {
     musicData.breakcore.forEach(track => {
         libraryHTML += `
             <div class="music-track" data-category="breakcore">
-                <div class="music-track-cover">
+                <div class="music-track-cover" data-initial="${track.initial || ''}">
                     <img src="${track.cover}" alt="${track.title}">
                 </div>
                 <div class="music-track-info">
@@ -458,8 +577,8 @@ function updateRainbowIndicator() {
         // Calcular el porcentaje de llenado (máximo 100%)
         const fillPercentage = Math.min((inputLength / maxLength) * 100, 100);
         
-        // Actualizar la altura del líquido
-        rainbowLiquid.style.height = `${fillPercentage}%`;
+        // Actualizar el ancho del líquido (ahora horizontal)
+        rainbowLiquid.style.width = `${fillPercentage}%`;
         
         // Cambiar el color según el nivel de llenado
         updateRainbowColor(fillPercentage);
@@ -476,7 +595,7 @@ function updateRainbowColor(percentage) {
         
         // Aplicar el color con un gradiente
         rainbowLiquid.style.background = `
-            linear-gradient(to top, 
+            linear-gradient(to right, 
                 hsl(${hue}, 100%, 60%), 
                 hsl(${(hue + 30) % 360}, 100%, 60%)
             )
@@ -493,7 +612,7 @@ function resetRainbowIndicator() {
     const rainbowLiquid = document.querySelector('.rainbow-liquid');
     
     if (rainbowLiquid) {
-        rainbowLiquid.style.height = '0%';
+        rainbowLiquid.style.width = '0%';
     }
 }
 
