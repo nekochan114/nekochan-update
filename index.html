@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/audio-player.css">
     <link rel="stylesheet" href="css/hex-maniac-animation.css">
+    <link rel="stylesheet" href="css/rainbow-indicator.css">
+    <link rel="stylesheet" href="css/music-covers.css">
 </head>
 <body>
     <div class="container">
@@ -32,6 +34,7 @@
                         </svg>
                     </button>
                 </div>
+                <!-- El tubo arcoíris se añadirá aquí mediante JavaScript -->
             </div>
             <div class="terminal">
                 <div class="terminal-header">
@@ -79,65 +82,92 @@
         <img src="images/hex_maniac.png" alt="Hex Maniac" class="hex-maniac-img">
     </div>
     
-    <!-- Reproductor de audio futurista -->
+    <!-- Reproductor de audio futurista compacto -->
     <div class="audio-player" id="audio-player">
-        <div class="audio-player-album">
-            <img src="https://i.imgur.com/3idGw5D.jpg" alt="Album Cover">
+        <div class="audio-player-header">
+            <div class="audio-player-title-bar">
+                <div class="audio-player-album">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCIgeT0iNTAiIGZvbnQtc2l6ZT0iMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjZmZmIj5QTTwvdGV4dD48L3N2Zz4=" alt="Album Cover">
+                </div>
+                <div class="audio-player-info">
+                    <div class="audio-player-title">PREACHER M.</div>
+                    <div class="audio-player-artist">BULLY V1</div>
+                </div>
+            </div>
+            <div class="audio-player-controls-top">
+                <button class="audio-player-library-btn" id="player-library-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 5h-3v5.5c0 1.38-1.12 2.5-2.5 2.5S10 13.88 10 12.5s1.12-2.5 2.5-2.5c.57 0 1.08.19 1.5.51V5h4v2zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/>
+                    </svg>
+                </button>
+                <button class="audio-player-minimize-btn" id="player-minimize-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M19 13H5v-2h14v2z"/>
+                    </svg>
+                </button>
+                <button class="audio-player-toggle-btn" id="player-toggle-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
         </div>
-        <div class="audio-player-info">
-            <div class="audio-player-title">PREACHER M.</div>
-            <div class="audio-player-artist">BULLY V1</div>
-        </div>
-        <div class="audio-player-time">
-            <span id="current-time">00:00</span>
-            <span class="audio-player-time-separator">/</span>
-            <span id="total-time">03:01</span>
-        </div>
-        <div class="audio-player-waveform">
-            <div class="audio-player-progress" id="audio-progress"></div>
-            <svg class="audio-player-waveform-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 100" preserveAspectRatio="none">
-                <path d="M0,50 Q20,40 40,50 T80,50 T120,50 T160,50 T200,50 T240,50 T280,50 T320,50 T360,50 T400,50 T440,50 T480,50 T520,50 T560,50 T600,50 T640,50 T680,50 T720,50 T760,50 T800,50" stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none"/>
-                <path d="M0,50 Q25,20 50,50 T100,50 T150,30 T200,50 T250,70 T300,50 T350,30 T400,50 T450,70 T500,50 T550,30 T600,50 T650,70 T700,50 T750,30 T800,50" stroke="rgba(255,255,255,0.8)" stroke-width="2" fill="none"/>
-            </svg>
-        </div>
-        <div class="audio-player-controls">
-            <button class="audio-player-button shuffle" id="shuffle-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm0.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
-                </svg>
-            </button>
-            <button class="audio-player-button previous" id="prev-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
-                </svg>
-            </button>
-            <button class="audio-player-button play-pause" id="play-pause-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                </svg>
-            </button>
-            <button class="audio-player-button next" id="next-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
-                </svg>
-            </button>
-            <button class="audio-player-button repeat" id="repeat-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
-                </svg>
-            </button>
-        </div>
-        <div class="audio-player-volume">
-            <div class="audio-player-volume-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
-                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        <div class="audio-player-main">
+            <div class="audio-player-time">
+                <span id="current-time">00:00</span>
+                <span class="audio-player-time-separator">/</span>
+                <span id="total-time">03:01</span>
+            </div>
+            <div class="audio-player-waveform">
+                <div class="audio-player-progress" id="audio-progress"></div>
+                <svg class="audio-player-waveform-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 100" preserveAspectRatio="none">
+                    <path d="M0,50 Q20,40 40,50 T80,50 T120,50 T160,50 T200,50 T240,50 T280,50 T320,50 T360,50 T400,50 T440,50 T480,50 T520,50 T560,50 T600,50 T640,50 T680,50 T720,50 T760,50 T800,50" stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none"/>
+                    <path d="M0,50 Q25,20 50,50 T100,50 T150,30 T200,50 T250,70 T300,50 T350,30 T400,50 T450,70 T500,50 T550,30 T600,50 T650,70 T700,50 T750,30 T800,50" stroke="rgba(255,255,255,0.8)" stroke-width="2" fill="none"/>
                 </svg>
             </div>
-            <div class="audio-player-volume-slider">
-                <div class="audio-player-volume-level" id="volume-level"></div>
+            <div class="audio-player-controls">
+                <button class="audio-player-button shuffle" id="shuffle-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm0.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
+                    </svg>
+                </button>
+                <button class="audio-player-button previous" id="prev-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                    </svg>
+                </button>
+                <button class="audio-player-button play-pause" id="play-pause-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
+                <button class="audio-player-button next" id="next-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                    </svg>
+                </button>
+                <button class="audio-player-button repeat" id="repeat-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="audio-player-volume">
+                <div class="audio-player-volume-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                    </svg>
+                </div>
+                <div class="audio-player-volume-slider">
+                    <div class="audio-player-volume-level" id="volume-level"></div>
+                </div>
             </div>
         </div>
     </div>
+    
+    <!-- Botón flotante para mostrar el reproductor (se añadirá mediante JavaScript) -->
+    
+    <!-- Biblioteca de música (se añadirá mediante JavaScript) -->
     
     <!-- Audio element (oculto) -->
     <audio id="audio-element" style="display: none;">
